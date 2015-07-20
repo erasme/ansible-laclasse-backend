@@ -1,0 +1,13 @@
+- name: Send notification message via Slack
+  local_action:
+    module: slack
+    domain: "{{ laclasse.slack.host }}"
+    token: "{{ laclasse.slack.token }}"
+    msg: "3...2...1... backend for {{ backend }} v{{ laclasse['services'][backend]['version'] }} @ {{ inventory_hostname }} :rocket: "
+    channel: "{{ laclasse.slack.channel }}"
+  tags:
+    - laclasse
+    - laclasse:backend
+
+- include: backend.yml tags=laclasse,laclasse:backend,nginx
+

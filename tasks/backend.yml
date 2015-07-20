@@ -1,0 +1,68 @@
+- debug: var=backend
+- debug: var=path
+- debug: var=laclasse_services[backend]
+- debug: var=laclasse_loadbalancers
+
+- set_fact: real_path={{ path | regex_replace('/', '_') }}
+  when: path is defined
+
+- set_fact: real_path={{ laclasse_services[backend]['path'] | regex_replace('/', '_') }}
+  when: path is not defined
+
+- debug: var=real_path
+
+# - name: Deploys location configuration from path parameter
+#   template:
+#     src="../templates/nginx_location.conf.j2"
+#     dest="/etc/nginx/locations.d/{{ laclasse.host_name }}-{{ path | regex_replace('/', '_') }}.conf"
+#   with_items: laclasse.loadbalancers
+#   when: path is defined
+#   delegate_to: "{{ item }}"
+#   tags: nginx  
+#   notify: 
+#     - Restart frontend nginx
+#     - Send notification message via Slack
+
+# - name: Deploys location configuration from application config
+#   template:
+#     src="../templates/nginx_location.conf.j2"
+#     dest="/etc/nginx/locations.d/{{ laclasse.host_name }}-{{ laclasse_services[backend]['path'] | regex_replace('/', '_') }}.conf"
+#   with_items: laclasse.loadbalancers
+#   when: path is not defined  
+#   delegate_to: "{{ item }}"
+#   tags: nginx  
+#   notify: 
+#     - Restart frontend nginx
+#     - Send notification message via Slack
+
+- name: Deploys location configuration from application config
+  template: >
+    src="../templates/nginx_location.conf.j2" 
+    dest="/etc/nginx/locations.d/{{ laclasse_main_domain }}-{{ real_path }}.conf"
+  with_items: laclasse.loadbalancers
+  delegate_to: "{{ item }}"
+  tags: nginx
+  notify: 
+    - Restart frontend nginx
+    - Send notification message via Slack
+
+# When path is not defined, it means that we use the path configured in inventory
+# If we specify path, this will use an alternate path BUT will not declare a new upstream server !
+# The sole purpose of this is to have multiple location entry points for a single upstream entry
+
+- name: Add server to upstreams
+  shell: "/usr/local/bin/upstreamctl add {{ backend }} {{ inventory_hostname }}:{{ laclasse_services[backend]['port'] }} --force"
+  with_items: laclasse_loadbalancers
+  register: output
+  when: path is not defined  
+  changed_when: "'already enabled' not in output.stdout"
+  delegate_to: "{{ item }}"
+  tags: nginx
+  notify: 
+    - Restart frontend nginx
+    - Send notification message via Slack
+
+- name: Adds monit monitoring
+  template: src="../templates/monit.j2" dest="/etc/monit/conf.d/laclasse-{{ backend }}"
+  when: monit_enabled
+  notify: Restart monit

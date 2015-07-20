@@ -1,0 +1,8 @@
+{% if backend in ['saml', 'sso'] %}
+check process laclasse-{{ backend }} with pidfile /var/run/nginx.pid
+{% else %}
+check process laclasse-{{ backend }} with pidfile {{ laclasse_pid_dir }}/laclasse-{{ backend }}/thin.{{ laclasse_services[backend]['port'] }}.pid
+{% endif %}
+   group laclasse
+   if failed port {{ laclasse_services[backend]['port'] }} then alert
+  # protocol http request "{{ path }}" then alert
