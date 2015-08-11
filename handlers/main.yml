@@ -1,7 +1,7 @@
 - name: Restart frontend nginx
   action: service name=nginx state=restarted
   delegate_to: "{{ item }}"
-  with_items: laclasse.loadbalancers
+  with_items: laclasse_loadbalancers
   tags:
     - laclasse:backend
     - laclasse
@@ -9,10 +9,10 @@
 - name: Send notification message via Slack
   local_action:
     module: slack
-    domain: "{{ laclasse.slack.host }}"
-    token: "{{ laclasse.slack.token }}"
+    domain: "{{ laclasse_slack.host }}"
+    token: "{{ laclasse_slack.token }}"
     msg: "Backend {{ inventory_hostname }} successfully added to frontends for {{ backend }} :thumbsup:"
-    channel: "{{ laclasse.slack.channel }}"
+    channel: "{{ laclasse_slack.channel }}"
   tags:
     - laclasse:backend
     - laclasse
