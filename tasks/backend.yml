@@ -18,8 +18,8 @@
 #   with_items: laclasse_loadbalancers
 #   when: path is defined
 #   delegate_to: "{{ item }}"
-#   tags: nginx  
-#   notify: 
+#   tags: nginx
+#   notify:
 #     - Restart frontend nginx
 #     - Send notification message via Slack
 
@@ -28,21 +28,21 @@
 #     src="../templates/nginx_location.conf.j2"
 #     dest="/etc/nginx/locations.d/{{ laclasse.host_name }}-{{ laclasse_services[backend]['path'] | regex_replace('/', '_') }}.conf"
 #   with_items: laclasse_loadbalancers
-#   when: path is not defined  
+#   when: path is not defined
 #   delegate_to: "{{ item }}"
-#   tags: nginx  
-#   notify: 
+#   tags: nginx
+#   notify:
 #     - Restart frontend nginx
 #     - Send notification message via Slack
 
 - name: Deploys location configuration from application config
-  template: >
-    src="../templates/nginx_location.conf.j2" 
-    dest="/etc/nginx/locations.d/{{ laclasse_main_domain }}-{{ real_path }}.conf"
+  template:
+    src: "../templates/nginx_location.conf.j2"
+    dest: "/etc/nginx/locations.d/{{ laclasse_main_domain }}-{{ real_path }}.conf"
   with_items: laclasse_loadbalancers
   delegate_to: "{{ item }}"
   tags: nginx
-  notify: 
+  notify:
     - Restart frontend nginx
     - Send notification message via Slack
 
@@ -58,7 +58,7 @@
   changed_when: "'already enabled' not in output.stdout"
   delegate_to: "{{ item }}"
   tags: nginx
-  notify: 
+  notify:
     - Restart frontend nginx
     - Send notification message via Slack
 
